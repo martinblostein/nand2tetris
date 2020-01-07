@@ -42,5 +42,17 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+    CondZero16(in=x, z=zx, out=xz);
+    CondZero16(in=y, z=zy, out=yz);
+
+    CondInv16(in=xz, n=nx, out=xzn);
+    CondInv16(in=yz, n=ny, out=yzn);
+
+    And16(a=xzn, b=yzn, out=andout);
+    Add16(a=xzn, b=yzn, out=addout);
+    Mux16(sel=f, a=andout, b=addout, out=fout);
+
+    CondInv16(in=fout, n=no, out=temp, out=out);
+    IsZero16(in=temp, out=zr);
+    IsNeg16(in=temp, out=ng);
 }

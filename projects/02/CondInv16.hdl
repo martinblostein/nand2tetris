@@ -1,0 +1,9 @@
+
+CHIP CondInv16 {
+    IN in[16], n;
+    OUT out[16];
+
+    PARTS:
+    Not16(in=in, out=inv);
+    Mux16(sel=n, a=in, b=inv, out=out);
+}
