@@ -26,6 +26,32 @@ CHIP Memory {
     IN in[16], load, address[15];
     OUT out[16];
 
+    // RAM:
+    // 0x0000 = 0000 0000 0000 0000 to
+    // 0x3FFF = 0011 0000 0000 0000
+
+    // Screen:
+    // 0x4000 = 0100 0000 0000 0000 to
+    // 0x5FFF = 0101 1111 1111 1111
+
+    // Keyboard:
+    // 0x6000 = 0110 0000 0000 0000
+    
+    // Look at [14,13]:
+    // 00, 01 = RAM
+    // 10     = SCREEN
+    // 11     = KEYBOARD
+
     PARTS:
-    // Put your code here:
+    // detemine whether we are loading to ram or screen
+    // (if the keyboard address is selected this is ignored)
+    DMux(in=load, sel=address[14], a=loadRam, b=loadScreen);
+
+
+    RAM16K(in=in, load=loadRam, address=address[0..13], out=ramOut); // 0x0000 -> 0x3FFF
+    Screen(in=in, load=loadScreen, address=address[0..12], out=screenOut); // 0x4000 -> 0x5FFF
+    Keyboard(out=keyboardOut); // 0x6000
+
+    Mux4Way16(a=ramOut, b=ramOut, c=screenOut, d=keyboardOut, sel=address[13..14], out=out);
+
 }
