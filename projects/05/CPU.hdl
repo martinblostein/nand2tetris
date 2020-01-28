@@ -39,5 +39,41 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+
+    // The first input to the ALU is always the D
+    // second input is a-bit == 0 ? A : M;
+    Mux16(a=aRegOut, b=inM, sel=instruction[12], out=y);
+    ALU(x=dRegOut, y=y, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=aluOut, out=outM, zr=zr, ng=ng);
+
+    // If A-instruction: A register is sent full instruction 
+    // else: A register sent ALU output
+    Mux16(a=instruction, b=aluOut, sel=instruction[15], out=aRegIn);
+
+    // A register loads if either we have an A instruction or dest1 == 1
+    Not(in=instruction[15], out=aInstruction);
+    Or(a=aInstruction, b=instruction[5], out=loadAReg);
+    ARegister(in=aRegIn, load=loadAReg, out=aRegOut, out[0..14]=addressM); // A register -> address of M
+
+    // D register loads iff C instruction and dest2 == 1
+    And(a=instruction[15], b=instruction[4], out=loadDReg);
+    // It always takes in the ALU output
+    DRegister(in=aluOut, load=loadDReg, out=dRegOut);
+
+    // M is written to iff C instruction and dest2 == 1
+    And(a=instruction[15], b=instruction[3], out=writeM);
+
+    // Jump logic
+    Not(in=ng, out=nng);
+    Not(in=zr, out=nzr);
+    And(a=nng, b=nzr, out=ps);
+
+    And(a=instruction[2], b=ng, out=j1);
+    And(a=instruction[1], b=zr, out=j2);
+    And(a=instruction[0], b=ps, out=j3);
+
+    Or(a=j1, b=j2, out=j1j2);
+    Or(a=j1j2, b=j3, out=j1j2j3);
+    And(a=j1j2j3, b=instruction[15], out=jump);
+
+    PC(in=aRegOut, load=jump, inc=true, reset=reset, out[0..14]=pc);
 }
